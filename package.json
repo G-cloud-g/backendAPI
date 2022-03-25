@@ -1,8 +1,8 @@
 {
-  "name": "it-expert",
+  "name": "backendapi",
   "version": "1.0.0",
-  "description": "IT-Expert - Student can take advice",
-  "main": "index.js",
+  "description": "",
+  "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -17,7 +17,10 @@
   },
   "homepage": "https://github.com/G-cloud-g/backendAPI#readme",
   "dependencies": {
+    "body-parser": "^1.19.2",
     "express": "^4.17.3",
-    "mongoose": "^6.2.8"
+    "mongodb": "^4.4.1",
+    "mongoose": "^6.2.8",
+    "nodemon": "^2.0.15"
   }
 }
