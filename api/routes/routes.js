@@ -85,6 +85,29 @@ router.post('/student/login',(req,res,next)=>{
             err:error
         })
     })
-    })
+    
+router.patch("/student/update/:id", async (req,res)=>{
+    try{
+        const _id = req.params.id;
+       const updateStudent=await Student.findByIdAndUpdate(_id, req.body,{
+           new:true
+       })
+       res.send(updateStudent);
+    }catch(e){
+       res.status(400).send(e);
+    }
+})
 
-module.exports=router;
+router.delete("/student/delete/:id",async(req,res)=>{
+    try{
+        const deleteStudents=
+        await Student.findByIdAndDelete(req.params.id);
+        if(!req.params.id){
+            return res.status(400).send();
+        }
+        res.send(deleteStudents);
+    }catch(e){res.status(500).send(e);}
+   
+})
+})
+module.exports = router;
