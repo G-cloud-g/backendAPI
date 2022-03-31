@@ -9,6 +9,7 @@ const sendgrid = require("nodemailer-sendgrid-transport");
 const sendgridTransport = require("nodemailer-sendgrid-transport");
 const crypto = require("crypto");
 const _ = require("lodash");
+const Student = require("./model/studentSchema");
 
 const transporter = nodemailer.createTransport(
   sendgridTransport({
@@ -237,28 +238,76 @@ router.post("/forgetpassword", (req, res) => {
     }
   });
 
-  // const { email } = req.body.email;
-  // Admin.findOne({ email }, (err, user) => {
-  //   if (err || !user) {
-  //     return res
-  //       .status(400)
-  //       .json({
-  //         error: "user with this email does not exist",
-  //       })
+  //student login
 
-  //       .then((admin) => {
-  //         transporter.sendMail({
-  //           to: admin.email,
-  //           from: "ruturajwaychal@gmail.com",
-  //           subject: "Account Activation Link",
-  //           html: "<h1>Please Clicl on the link given below </h1>",
-  //         });
-  //       });
-  //   }
-  //   res.status(200).json({
-  //     newStudent: email,
-  //   });
-  // });
+  router.post("/student/login", (req, res, next) => {
+    Student.find({ username: req.body.username })
+      .exec()
+      .then((user) => {
+        console.log(user);
+        if (user.length < 1) {
+          return res.status(401).json({
+            msg: "User Not Exist",
+          });
+        }
+        bcrypt.compare(req.body.password, user[0].password, (err, result) => {
+          if (!result) {
+            return res.status(401).json({
+              msg: "Incorrect Password",
+            });
+          }
+          if (result) {
+            const token = jwt.sign(
+              {
+                username: user[0].username,
+                email: user[0].email,
+                phone: user[0].phone,
+                interestarea: user[0].interestarea,
+              },
+              "this is my code",
+              {
+                expiresIn: "24h",
+              }
+            );
+            res.status(200).json({
+              username: user[0].username,
+              email: user[0].email,
+              phone: user[0].phone,
+              interestarea: user[0].interestarea,
+              token: token,
+            });
+          }
+        });
+      })
+      .catch((err) => {
+        res.status(500).json({
+          err: error,
+        });
+      });
+
+    // const { email } = req.body.email;
+    // Admin.findOne({ email }, (err, user) => {
+    //   if (err || !user) {
+    //     return res
+    //       .status(400)
+    //       .json({
+    //         error: "user with this email does not exist",
+    //       })
+
+    //       .then((admin) => {
+    //         transporter.sendMail({
+    //           to: admin.email,
+    //           from: "ruturajwaychal@gmail.com",
+    //           subject: "Account Activation Link",
+    //           html: "<h1>Please Clicl on the link given below </h1>",
+    //         });
+    //       });
+    //   }
+    //   res.status(200).json({
+    //     newStudent: email,
+    //   });
+    // });
+  });
 });
 
 module.exports = router;

@@ -26,6 +26,7 @@
     "mongoose": "^6.2.8",
     "nodemailer": "^6.7.3",
     "nodemailer-sendgrid-transport": "^0.2.0",
-    "nodemon": "^2.0.15"
+    "nodemon": "^2.0.15",
+    "validator": "^13.7.0"
   }
 }
