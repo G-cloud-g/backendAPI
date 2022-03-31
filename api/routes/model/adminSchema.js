@@ -4,9 +4,15 @@ const AdminSchema = new mongoose.Schema({
   _id: mongoose.Schema.Types.ObjectId,
   name: String,
   username: String,
-  email: String,
+  email: {
+    type: String,
+    required: true,
+  },
   password: String,
-  userType: Boolean,
+  userType: String,
+
+  resetToken: String,
+  expireToken: Date,
 });
 
 module.exports = mongoose.model("Admin", AdminSchema);
