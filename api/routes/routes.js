@@ -75,7 +75,7 @@ router.delete("/:id", (req, res, next) => {
 
 //signup
 
-router.post("/signup", (req, res, next) => {
+router.post("/expert/signup", (req, res, next) => {
   bcrypt.hash(req.body.password, 10, (err, hash) => {
     if (err) {
       return res.status(500).json({
@@ -117,7 +117,7 @@ router.post("/signup", (req, res, next) => {
 
 //login data
 
-router.post("/login", (req, res, next) => {
+router.post("/expert/login", (req, res, next) => {
   Admin.find({ username: req.body.username })
     .exec()
     .then((user) => {
@@ -161,6 +161,7 @@ router.post("/login", (req, res, next) => {
         err: err,
       });
     });
+  
 });
 
 //forget password
@@ -192,7 +193,81 @@ router.post("/forgetpassword", (req, res) => {
         });
       });
     });
+ 
   });
+})
+
+router.post('/student/login',(req,res,next)=>{
+    Student.find({username:req.body.username})
+    .exec()
+    .then(user=>{
+        console.log(user);
+        if(user.length < 1)
+        {
+            return res.status(401).json({
+                msg:'User Not Exist'
+            })
+        }
+        bcrypt.compare(req.body.password,user[0].password,(err,result)=>{
+            if(!result)
+            {
+                return res.status(401).json({
+                    msg:'Incorrect Password'
+                })
+            }
+            if(result)
+            {
+             const token = jwt.sign({
+                 username:user[0].username,
+                 email:user[0].email,
+                 phone:user[0].phone,
+                 interestarea:user[0].interestarea
+                
+             },
+             'this is my code',
+             {
+                 expiresIn:"24h"
+             }
+             );
+             res.status(200).json({
+                 username:user[0].username,
+                 email:user[0].email,
+                 phone:user[0].phone,
+                 interestarea:user[0].interestarea,
+                 token:token
+             })
+            }
+        })
+    }).catch(err=>{
+        res.status(500).json({
+            err:error
+        })
+    })
+  })
+
+router.patch("/student/update/:id", async (req,res)=>{
+    try{
+        const _id = req.params.id;
+       const updateStudent=await Student.findByIdAndUpdate(_id, req.body,{
+           new:true
+       })
+       res.send(updateStudent);
+    }catch(e){
+       res.status(400).send(e);
+    }
+})
+
+router.delete("/student/delete/:id",async(req,res)=>{
+    try{
+        const deleteStudents=
+        await Student.findByIdAndDelete(req.params.id);
+        if(!req.params.id){
+            return res.status(400).send();
+        }
+        res.send(deleteStudents);
+    }catch(e){res.status(500).send(e);}
+   
+})
 
   //reset passsword
 
@@ -238,52 +313,7 @@ router.post("/forgetpassword", (req, res) => {
     }
   });
 
-  //student login
-
-  router.post("/student/login", (req, res, next) => {
-    Student.find({ username: req.body.username })
-      .exec()
-      .then((user) => {
-        console.log(user);
-        if (user.length < 1) {
-          return res.status(401).json({
-            msg: "User Not Exist",
-          });
-        }
-        bcrypt.compare(req.body.password, user[0].password, (err, result) => {
-          if (!result) {
-            return res.status(401).json({
-              msg: "Incorrect Password",
-            });
-          }
-          if (result) {
-            const token = jwt.sign(
-              {
-                username: user[0].username,
-                email: user[0].email,
-                phone: user[0].phone,
-                interestarea: user[0].interestarea,
-              },
-              "this is my code",
-              {
-                expiresIn: "24h",
-              }
-            );
-            res.status(200).json({
-              username: user[0].username,
-              email: user[0].email,
-              phone: user[0].phone,
-              interestarea: user[0].interestarea,
-              token: token,
-            });
-          }
-        });
-      })
-      .catch((err) => {
-        res.status(500).json({
-          err: error,
-        });
-      });
+  
 
     // const { email } = req.body.email;
     // Admin.findOne({ email }, (err, user) => {
@@ -307,7 +337,5 @@ router.post("/forgetpassword", (req, res) => {
     //     newStudent: email,
     //   });
     // });
-  });
-});
 
 module.exports = router;
