@@ -3,6 +3,9 @@ const app = express();
 const route = require("./api/routes/routes");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
+const cors=require('cors');
+
+app.use(cors());//cors use to connect backend to frontend
 
 mongoose.connect(
   "mongodb+srv://ruturajj:rutu3095@cluster0.ub8mp.mongodb.net/myFirstDatabase?retryWrites=true&w=majority"
@@ -29,7 +32,7 @@ app.use((req, res, next) => {
 
 app.use((req, res, next) => {
   res.status(200).json({
-    message: "app is running on port 3000",
+    message: "app is running on port 3001",
   });
 });
 

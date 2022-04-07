@@ -56,7 +56,14 @@ const studentSchema = new mongoose.Schema({
     usertype: {
         type:Number,
         default: 0
+    },
+    resetToken:{
+        type:String
+    },
+    expireToken:{
+        type:Date
     }
+
 })
 
 const Student = new mongoose.model('Student', studentSchema);

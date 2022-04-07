@@ -5,7 +5,6 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
-const sendgrid = require("nodemailer-sendgrid-transport");
 const sendgridTransport = require("nodemailer-sendgrid-transport");
 const crypto = require("crypto");
 const _ = require("lodash");
@@ -16,65 +15,12 @@ const transporter = nodemailer.createTransport(
     service: "gmail",
     auth: {
       api_key:
-        "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",
+        "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",
     },
   })
 );
 
-//get data
-
-router.get("/", (req, res, next) => {
-  Admin.find()
-    .then((result) => {
-      res.status(200).json({
-        admin: result,
-      });
-    })
-    .catch((error) => {
-      console.log(error);
-      res.status(500).json({
-        error: error,
-      });
-    });
-});
-
-//get data by ID
-
-router.get("/:id", (req, res, next) => {
-  Admin.findById(req.params.id)
-    .then((result) => {
-      res.status(200).json({
-        admin: result,
-      });
-    })
-    .catch((error) => {
-      console.log(error);
-      res.status(500).json({
-        error: error,
-      });
-    });
-});
-
-//delete data
-
-router.delete("/:id", (req, res, next) => {
-  Admin.findByIdAndDelete({ _id: req.params.id })
-    .then((result) => {
-      res.status(200).json({
-        message: "Item Deleted",
-        result: result,
-      });
-    })
-    .catch((error) => {
-      console.log(error);
-      res.status(500).json({
-        error: error,
-      });
-    });
-});
-
-//signup
-
+//expert signup
 router.post("/expert/signup", (req, res, next) => {
   bcrypt.hash(req.body.password, 10, (err, hash) => {
     if (err) {
@@ -96,15 +42,14 @@ router.post("/expert/signup", (req, res, next) => {
         .then((admin) => {
           transporter.sendMail({
             to: admin.email,
-            from: "ruturajwaychal@gmail.com",
-            subject: "O Captain My Captain",
-            html: "<h1> welcome to Dead Poets Society </h1>",
+            from: "shaikhaasim369@gmail.com",
+            subject: "SignUp Notification",
+            html: "<h1> You have successfully registered </h1>",
           });
           res.status(200).json({
             message: "Email sent successfully",
           });
         })
-
         .catch((err) => {
           console.log(err);
           res.status(500).json({
@@ -115,11 +60,9 @@ router.post("/expert/signup", (req, res, next) => {
   });
 });
 
-//login data
-
-router.post("/expert/login", (req, res, next) => {
+//expert login 
+router.post('/expert/login', (req, res, next) => {
   Admin.find({ username: req.body.username })
-    .exec()
     .then((user) => {
       if (user.length < 1) {
         return res.status(401).json({
@@ -145,7 +88,6 @@ router.post("/expert/login", (req, res, next) => {
               expiresIn: "24h",
             }
           );
-
           res.status(200).json({
             username: user[0].username,
             userType: user[0].userType,
@@ -161,12 +103,72 @@ router.post("/expert/login", (req, res, next) => {
         err: err,
       });
     });
-  
 });
 
-//forget password
+//get expert data
+router.get("/expert", (req, res, next) => {
+  Admin.find()
+    .then((result) => {
+      res.status(200).json({
+        admin: result,
+      });
+    })
+    .catch((error) => {
+      console.log(error);
+      res.status(500).json({
+        error: error,
+      });
+    });
+});
 
-router.post("/forgetpassword", (req, res) => {
+//get expert data by ID
+router.get("/expert/:id", (req, res, next) => {
+  Admin.findById(req.params.id)
+    .then((result) => {
+      res.status(200).json({
+        admin: result,
+      });
+    })
+    .catch((error) => {
+      console.log(error);
+      res.status(500).json({
+        error: error,
+      });
+    });
+});
+
+//Update Expert Details
+router.patch('/expert/update/:id', async (req,res)=>{
+  try{
+      const _id = req.params.id;
+     const updateExpert=await Admin.findByIdAndUpdate(_id, req.body,{
+         new:true
+     })
+     res.send(updateExpert);
+  }catch(e){
+     res.status(400).send(e);
+  }
+})
+
+//delete expert Records
+router.delete("/expert/delete/:id", (req, res, next) => {
+  Admin.findByIdAndDelete({ _id: req.params.id })
+    .then((result) => {
+      res.status(200).json({
+        message: "Item Deleted",
+        result: result,
+      });
+    })
+    .catch((error) => {
+      console.log(error);
+      res.status(500).json({
+        error: error,
+      });
+    });
+});
+
+//expert forget password
+router.post('/expert/forgetpassword', (req, res) => {
   crypto.randomBytes(32, (err, buffer) => {
     if (err) {
       console.log(err);
@@ -183,23 +185,110 @@ router.post("/forgetpassword", (req, res) => {
       admin.save().then((result) => {
         transporter.sendMail({
           to: admin.email,
-          from: "ruturajwaychal@gmail.com",
+          from: "shaikhaasim369@gmail.com",
           subject: "Password reset",
           html: `<p>Your request for reset password </p>
-            <h5>click on this link <a href="http://localhost:3000/reset/">${token}</a> to reset password</h5>`,
+            <h5>click on this  <a href="http://localhost:3000/reset/${token}">link</a> to reset password</h5>`,
         });
         res.json({
           message: "Reset email sent successfully. Please check your email.",
         });
       });
     });
- 
   });
 })
 
+//expert reset passsword
+router.patch("/expert/resetpassword", (req, res) => {
+  const { resetToken, newPass } = req.body;
+  if (resetToken) 
+  {
+    jwt.verify(resetToken,(error,decoded)=>{
+      console.log(resetToken);
+      if (error) {
+        return res.status(422).json({
+          error: "Incorrect Token",
+        });
+      }
+      Admin.findOne({ resetToken }, (err, admin) => {
+        if (err || !admin) {
+          return res.status(422).json({
+            error: "user with same token doesn't exist",
+          });
+        }
+        const obj = {
+          password: newPass,
+        };
+
+        admin = _.extend(admin, obj);
+
+        admin.save((err, result) => {
+          if (err) {
+            return res.status(422).json({ error: "reset password error" });
+          } else {
+            res.status(200).json({
+              message: "your password has been changed successfully",
+            });
+          }
+        });
+      });
+    });
+  } 
+  else {
+    return res.status(422).json({
+      error: "Authentication Error",
+    });
+  }
+});
+
+//student signup
+router.post('/student/signup',(req,res,next)=>{
+  bcrypt.hash(req.body.password,10,(err, hash)=>{
+      if(err)
+      {
+          return res.status(500).json({
+              error:err
+          })
+      }
+  else{
+  const student = new Student({
+      _id: new mongoose.Types.ObjectId(),
+      firstname:req.body.firstname,
+      lastname:req.body.lastname,
+      username:req.body.username,
+      email:req.body.email,
+      password:hash,
+      phone:req.body.phone,
+      address:req.body.address,
+      qualification:req.body.qualification,
+      interestarea:req.body.interestarea,
+      technology:req.body.technology
+  })
+ student.save()
+ .then((admin) => {
+  transporter.sendMail({
+    to: admin.email,
+    from: "shaikhaasim369@gmail.com",
+    subject: "SignUp Notification",
+    html: "<h1>  You have successfully registered here as a student </h1>",
+  });
+  res.status(200).json({
+    message: "Email sent successfully",
+  });
+})
+.catch((err) => {
+  console.log(err);
+  res.status(500).json({
+    error: err,
+  });
+});
+}
+});
+});
+
+//student login
 router.post('/student/login',(req,res,next)=>{
     Student.find({username:req.body.username})
-    .exec()
     .then(user=>{
         console.log(user);
         if(user.length < 1)
@@ -222,7 +311,6 @@ router.post('/student/login',(req,res,next)=>{
                  email:user[0].email,
                  phone:user[0].phone,
                  interestarea:user[0].interestarea
-                
              },
              'this is my code',
              {
@@ -238,14 +326,49 @@ router.post('/student/login',(req,res,next)=>{
              })
             }
         })
-    }).catch(err=>{
-        res.status(500).json({
+    })
+    .catch(err=>{
+        res.status(500).json
+        ({
             err:error
         })
     })
   })
 
-router.patch("/student/update/:id", async (req,res)=>{
+//get students data
+  router.get('/student', (req, res, next) => {
+  Student.find()
+    .then((result) => {
+      res.status(201).json({
+        student: result,
+      });
+    })
+    .catch((error) => {
+      console.log(error);
+      res.status(500).json({
+        error: error,
+      });
+    });
+  });
+
+  //get student data by ID
+    router.get('/student/:id', (req, res, next) => {
+      Student.findById(req.params.id)
+        .then((result) => {
+          res.status(200).json({
+            student: result,
+          });
+        })
+        .catch((error) => {
+          console.log(error);
+          res.status(500).json({
+            error: error,
+          });
+        });
+      }); 
+    
+//Update student details
+router.patch('/student/update/:id', async (req,res)=>{
     try{
         const _id = req.params.id;
        const updateStudent=await Student.findByIdAndUpdate(_id, req.body,{
@@ -257,7 +380,8 @@ router.patch("/student/update/:id", async (req,res)=>{
     }
 })
 
-router.delete("/student/delete/:id",async(req,res)=>{
+//delete student records
+router.delete('/student/delete/:id',async(req,res)=>{
     try{
         const deleteStudents=
         await Student.findByIdAndDelete(req.params.id);
@@ -265,77 +389,82 @@ router.delete("/student/delete/:id",async(req,res)=>{
             return res.status(400).send();
         }
         res.send(deleteStudents);
-    }catch(e){res.status(500).send(e);}
-   
+    }catch(e){res.status(500).send(e);
+  }
 })
 
-  //reset passsword
-
-  router.put("/resetpassword", (req, res) => {
-    const { resetToken, newPass } = req.body;
-    if (resetToken) {
-      jwt.verify(resetToken, function (error, decodedData) {
-        if (error) {
-          return res.status(422).json({
-            error: "Incorrect Token",
-          });
-        }
-
-        Admin.findOne({ resetToken }, (err, admin) => {
-          if (err || !admin) {
-            return res.status(422).json({
-              error: "user with same token doesn't exist",
-            });
-          }
-
-          const obj = {
-            password: newPass,
-          };
-
-          admin = _.extend(admin, obj);
-
-          admin.save((err, result) => {
-            if (err) {
-              return res.status(422).json({ error: "reset password error" });
-            } else {
-              res.status(200).json({
-                // verfiyToken: token,
-                message: "your password has been changed successfully",
-              });
-            }
-          });
+//student forget-Password
+router.post('/student/forgetpassword', (req, res) => {
+  crypto.randomBytes(32, (err, buffer) => {
+    if (err) {
+      console.log(err);
+    }
+    const token = buffer.toString("hex");
+    Student.findOne({ email: req.body.email }).then((student) => {
+      if (!student) {
+        return res.status(420).json({
+          error: "student doesn't exist",
+        });
+      }
+      student.resetToken = token;
+      student.expireToken = Date.now() + 3600000;
+      student.save().then((result) => {
+        transporter.sendMail({
+          to: student.email,
+          from: "shaikhaasim369@gmail.com",
+          subject: "Password reset",
+          html: `<p>Your request for reset password </p>
+            <h5>click on this  <a href="http://localhost:3000/reset/${token}">link</a> to reset password</h5>`,
+        });
+        res.json({
+          message: "Reset email sent successfully. Please check your email.",
         });
       });
-    } else {
-      return res.status(422).json({
-        error: "Authentication Error",
-      });
-    }
+    });
+ 
   });
+})
 
-  
+//student Reset password
+router.patch('/student/resetpassword', (req, res) => {
+  const { resetToken, newPass } = req.body;
+  if (resetToken) 
+  {
+    jwt.verify(resetToken,(error,decoded)=>{
+      if (error) {
+        return res.status(422).json({
+          error: "Incorrect Token",
+        });
+      }
+      Student.findOne({ resetToken }, (err, student) => {
+        if (err || !student) {
+          return res.status(422).json({
+            error: "user with same token doesn't exist",
+          });
+        }
+        const obj = {
+          password: newPass,
+        };
 
-    // const { email } = req.body.email;
-    // Admin.findOne({ email }, (err, user) => {
-    //   if (err || !user) {
-    //     return res
-    //       .status(400)
-    //       .json({
-    //         error: "user with this email does not exist",
-    //       })
+        student = _.extend(student, obj);
+        student.save((err, result) => {
+          if (err) {
+            return res.status(422).json({ error: "reset password error" });
+          } else {
+            res.status(200).json({
+              message: "your password has been changed successfully",
+            });
+          }
+        });
+      });
+    });
+  } 
+  else {
+    return res.status(421).json({
+      error: "Authentication Error",
+    });
+  }
+});
 
-    //       .then((admin) => {
-    //         transporter.sendMail({
-    //           to: admin.email,
-    //           from: "ruturajwaychal@gmail.com",
-    //           subject: "Account Activation Link",
-    //           html: "<h1>Please Clicl on the link given below </h1>",
-    //         });
-    //       });
-    //   }
-    //   res.status(200).json({
-    //     newStudent: email,
-    //   });
-    // });
+    module.exports = router;
 
-module.exports = router;
