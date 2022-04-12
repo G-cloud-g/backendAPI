@@ -9,13 +9,14 @@ const sendgridTransport = require("nodemailer-sendgrid-transport");
 const crypto = require("crypto");
 const _ = require("lodash");
 const Student = require("./model/studentSchema");
+const jose=require('jose');
 
 const transporter = nodemailer.createTransport(
   sendgridTransport({
     service: "gmail",
     auth: {
       api_key:
-        "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",
+        "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",
     },
   })
 );
@@ -42,11 +43,12 @@ router.post("/expert/signup", (req, res, next) => {
         .then((admin) => {
           transporter.sendMail({
             to: admin.email,
-            from: "shaikhaasim369@gmail.com",
+            from: "jackweatherald@gmail.com",
             subject: "SignUp Notification",
             html: "<h1> You have successfully registered </h1>",
           });
           res.status(200).json({
+            msg:"Welcome",
             message: "Email sent successfully",
           });
         })
@@ -89,6 +91,7 @@ router.post('/expert/login', (req, res, next) => {
             }
           );
           res.status(200).json({
+            name:user[0].name,
             username: user[0].username,
             userType: user[0].userType,
             email: user[0].email,
@@ -167,13 +170,10 @@ router.delete("/expert/delete/:id", (req, res, next) => {
     });
 });
 
-//expert forget password
-router.post('/expert/forgetpassword', (req, res) => {
-  crypto.randomBytes(32, (err, buffer) => {
-    if (err) {
-      console.log(err);
-    }
-    const token = buffer.toString("hex");
+//expert forgot password
+router.post('/expert/forgotpwd/:id', (req, res) => {
+  
+  const token=Math.floor(100000 + Math.random() * 900000);
     Admin.findOne({ email: req.body.email }).then((admin) => {
       if (!admin) {
         return res.status(422).json({
@@ -185,10 +185,10 @@ router.post('/expert/forgetpassword', (req, res) => {
       admin.save().then((result) => {
         transporter.sendMail({
           to: admin.email,
-          from: "shaikhaasim369@gmail.com",
+          from: "jackweatherald@gmail.com",
           subject: "Password reset",
           html: `<p>Your request for reset password </p>
-            <h5>click on this  <a href="http://localhost:3000/reset/${token}">link</a> to reset password</h5>`,
+            <h5>Use this OTP   <a href="http://localhost:3000/reset/">${token}</a> to reset password</h5>`,
         });
         res.json({
           message: "Reset email sent successfully. Please check your email.",
@@ -196,50 +196,57 @@ router.post('/expert/forgetpassword', (req, res) => {
       });
     });
   });
-})
+
 
 //expert reset passsword
-router.patch("/expert/resetpassword", (req, res) => {
-  const { resetToken, newPass } = req.body;
-  if (resetToken) 
-  {
-    jwt.verify(resetToken,(error,decoded)=>{
-      console.log(resetToken);
-      if (error) {
-        return res.status(422).json({
-          error: "Incorrect Token",
-        });
-      }
-      Admin.findOne({ resetToken }, (err, admin) => {
+router.patch('/expert/resetpwd/:id', (req, res) => {
+  const { resetToken, newPass ,email} = req.body;
+  bcrypt.hash(newPass,10,(err,hash)=>{
+    if(err){
+      return res.status(500).json({
+        error:err
+      });
+    }
+  else{
+      if (resetToken) 
+    {
+      Admin.findOne({ resetToken }, (err, admin) => 
+      {
         if (err || !admin) {
           return res.status(422).json({
             error: "user with same token doesn't exist",
           });
         }
+
         const obj = {
-          password: newPass,
+          password: hash,
         };
-
+          console.log(obj);
         admin = _.extend(admin, obj);
-
-        admin.save((err, result) => {
+        admin.save((err, result) => 
+        {
           if (err) {
             return res.status(422).json({ error: "reset password error" });
-          } else {
-            res.status(200).json({
+          } else 
+          {
+            res.status(200).json
+            ({
               message: "your password has been changed successfully",
             });
           }
         });
-      });
-    });
-  } 
+      })
+    }
+   
   else {
-    return res.status(422).json({
+    return res.status(421).json({
       error: "Authentication Error",
     });
   }
+}
+})
 });
+
 
 //student signup
 router.post('/student/signup',(req,res,next)=>{
@@ -268,7 +275,7 @@ router.post('/student/signup',(req,res,next)=>{
  .then((admin) => {
   transporter.sendMail({
     to: admin.email,
-    from: "shaikhaasim369@gmail.com",
+    from: "jackweatherald@gmail.com",
     subject: "SignUp Notification",
     html: "<h1>  You have successfully registered here as a student </h1>",
   });
@@ -318,10 +325,16 @@ router.post('/student/login',(req,res,next)=>{
              }
              );
              res.status(200).json({
+                firstname:user[0].firstname,
+                lastname:user[0].lastname,
                  username:user[0].username,
                  email:user[0].email,
                  phone:user[0].phone,
+                 address:user[0].address,
+                 qualification:user[0].qualification,
                  interestarea:user[0].interestarea,
+                 technology:user[0].technology,
+                 usertype:user[0].usertype,
                  token:token
              })
             }
@@ -350,6 +363,7 @@ router.post('/student/login',(req,res,next)=>{
       });
     });
   });
+
 
   //get student data by ID
     router.get('/student/:id', (req, res, next) => {
@@ -394,16 +408,13 @@ router.delete('/student/delete/:id',async(req,res)=>{
 })
 
 //student forget-Password
-router.post('/student/forgetpassword', (req, res) => {
-  crypto.randomBytes(32, (err, buffer) => {
-    if (err) {
-      console.log(err);
-    }
-    const token = buffer.toString("hex");
+router.post('/student/forgotpwd/:id', (req, res) => {
+  
+  const token=Math.floor(100000 + Math.random() * 900000);
     Student.findOne({ email: req.body.email }).then((student) => {
       if (!student) {
-        return res.status(420).json({
-          error: "student doesn't exist",
+        return res.status(422).json({
+          error: "user doesn't exist",
         });
       }
       student.resetToken = token;
@@ -411,59 +422,62 @@ router.post('/student/forgetpassword', (req, res) => {
       student.save().then((result) => {
         transporter.sendMail({
           to: student.email,
-          from: "shaikhaasim369@gmail.com",
+          from: "jackweatherald@gmail.com",
           subject: "Password reset",
           html: `<p>Your request for reset password </p>
-            <h5>click on this  <a href="http://localhost:3000/reset/${token}">link</a> to reset password</h5>`,
+            <h5>Use this OTP   <a href="http://localhost:3000/reset/">${token}</a> to reset password</h5>`,
         });
         res.json({
           message: "Reset email sent successfully. Please check your email.",
         });
       });
     });
- 
   });
-})
 
 //student Reset password
-router.patch('/student/resetpassword', (req, res) => {
-  const { resetToken, newPass } = req.body;
-  if (resetToken) 
-  {
-    jwt.verify(resetToken,(error,decoded)=>{
-      if (error) {
-        return res.status(422).json({
-          error: "Incorrect Token",
-        });
-      }
-      Student.findOne({ resetToken }, (err, student) => {
+router.patch('/student/resetpwd/:id', (req, res) => {
+  const { resetToken, newPass ,email} = req.body;
+  bcrypt.hash(newPass,10,(err,hash)=>{
+    if(err){
+      return res.status(500).json({
+        error:err
+      });
+    }
+  else{
+      if (resetToken) 
+    {
+      Student.findOne({ resetToken }, (err, student) => 
+      {
         if (err || !student) {
           return res.status(422).json({
             error: "user with same token doesn't exist",
           });
         }
         const obj = {
-          password: newPass,
+          password: hash,
         };
-
-        student = _.extend(student, obj);
-        student.save((err, result) => {
+          student = _.extend(student, obj);
+          student.save((err, result) => 
+        {
           if (err) {
             return res.status(422).json({ error: "reset password error" });
-          } else {
-            res.status(200).json({
+          } else 
+          {
+            res.status(200).json
+            ({
               message: "your password has been changed successfully",
             });
           }
         });
-      });
-    });
-  } 
+      })
+    }
   else {
     return res.status(421).json({
       error: "Authentication Error",
     });
   }
+}
+})
 });
 
     module.exports = router;
