@@ -2,40 +2,32 @@ const mongoose = require("mongoose");
 const validator = require("validator");
 
 const AdminSchema = new mongoose.Schema({
-  _id: mongoose.Schema.Types.ObjectId,
-  name: {
-    type:String,
-    required:true
-  },
-  username:{
-    type:String,
-    required:true,
-    unique:true
-   
-  }, 
-  email: {
-    type:String,
-    required:true,
-    unique: [true, "Email is already present"],
-    validate(value) {
-        if (!validator.isEmail(value)) {
-            throw new Error("Invalid Email")
-        }
-    }
-  },
-  password:{
-    type: String,
-  },
-  userType:{
-    type:String,
-  } ,
-
-  resetToken: {
-    type:String
-  },
-  expireToken:{
-    type:Date,
-  } 
-});
-
-module.exports = mongoose.model("Admin", AdminSchema);
+    _id: mongoose.Schema.Types.ObjectId,
+     Name: {
+          type:String,
+          required:true,
+          minlength:3
+      },
+      UserName: {
+          type:String,
+          required:true,
+          minlength:3,
+          unique:[true,"UserName Already Exists"]
+      },
+      Email: {
+          type:String,
+          required:true,
+          unique: [true, "Email is already present"],
+          validate(value) {
+              if (!validator.isEmail(value)) {
+                  throw new Error("Invalid Email")
+              }
+          }
+      },
+      password: {
+          type: String,
+          required: true
+      }
+    });
+    const Admin = new mongoose.model('Admin', AdminSchema);
+    module.exports =Admin;
