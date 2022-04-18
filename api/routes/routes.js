@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const Admin = require("./model/adminSchema");
+const Expert = require("./model/ExpertSchema");
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
@@ -9,62 +9,68 @@ const sendgridTransport = require("nodemailer-sendgrid-transport");
 const crypto = require("crypto");
 const _ = require("lodash");
 const Student = require("./model/studentSchema");
-const jose=require('jose');
+ const Admin=require('./model/AdminSchema');
+require("dotenv").config();
+
 
 const transporter = nodemailer.createTransport(
   sendgridTransport({
     service: "gmail",
     auth: {
-      api_key:
-        "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",
+    api_key: process.env.API_KEY
+
     },
   })
 );
 
-//expert signup
-router.post("/expert/signup", (req, res, next) => {
-  bcrypt.hash(req.body.password, 10, (err, hash) => {
-    if (err) {
-      return res.status(500).json({
-        error: err,
-      });
-    } else {
-      const admin = new Admin({
-        _id: new mongoose.Types.ObjectId(),
-        name: req.body.name,
-        username: req.body.username,
-        email: req.body.email,
-        password: hash,
-        userType: req.body.userType,
-      });
 
-      admin
-        .save()
-        .then((admin) => {
-          transporter.sendMail({
-            to: admin.email,
-            from: "jackweatherald@gmail.com",
-            subject: "SignUp Notification",
-            html: "<h1> You have successfully registered </h1>",
-          });
-          res.status(200).json({
-            msg:"Welcome",
-            message: "Email sent successfully",
-          });
-        })
-        .catch((err) => {
-          console.log(err);
-          res.status(500).json({
-            error: err,
-          });
-        });
-    }
+router.post('/expert/signup',(req,res,next)=>{
+  bcrypt.hash(req.body.password,10,(err, hash)=>{
+      if(err)
+      {
+          return res.status(500).json({
+              error:err
+          })
+      }
+  else{
+  const expert = new Expert({
+      _id: new mongoose.Types.ObjectId(),
+      Name:req.body.Name,
+      UserName:req.body.UserName,
+      Email:req.body.Email,
+      password:hash,
+      phone:req.body.phone,
+      Address:req.body.Address,
+      Qualification:req.body.Qualification,
+      Technology:req.body.Technology
+  })
+ expert.save()
+ .then((user) => {
+  transporter.sendMail({
+    to: user.Email,
+    from: "tonyura6@gmail.com",
+    subject: "SignUp Notification",
+    html: "<h1>  You have successfully registered here as a student </h1>",
+  });
+  res.status(200).json({
+    message: "Email sent successfully",
+  });
+})
+.catch((err) => {
+  // console.log(err);
+  res.status(500).json
+  ({
+    Error:"UserName Already exsts",
+    Errors:"or Please Enter Unique Email",
+    Message:"Expert validation Failed!"
   });
 });
-
+}
+});
+});
 //expert login 
 router.post('/expert/login', (req, res, next) => {
-  Admin.find({ username: req.body.username })
+  Expert.find({ UserName: req.body.UserName })
     .then((user) => {
       if (user.length < 1) {
         return res.status(401).json({
@@ -80,10 +86,10 @@ router.post('/expert/login', (req, res, next) => {
         if (result) {
           const token = jwt.sign(
             {
-              name: user[0].name,
-              email: user[0].email,
-              username: user[0].username,
-              userType: user[0].userType,
+              Name: user[0].Name,
+              UserName: user[0].UserName,
+              Email: user[0].Email,
+              UserType: user[0].UserType,
             },
             "this is dummy text",
             {
@@ -91,12 +97,17 @@ router.post('/expert/login', (req, res, next) => {
             }
           );
           res.status(200).json({
-            name:user[0].name,
-            username: user[0].username,
-            userType: user[0].userType,
-            email: user[0].email,
+            id:user[0].id,
+            Name:user[0].Name,
+            UserName: user[0].UserName,
+            Email: user[0].Email,
             phone: user[0].phone,
+            Address:user[0].Address,
+            Qualification:user[0].Qualification,
+            Technology:user[0].Technology,
+            UserType: user[0].UserType,
             token: token,
+          
           });
         }
       });
@@ -110,10 +121,10 @@ router.post('/expert/login', (req, res, next) => {
 
 //get expert data
 router.get("/expert", (req, res, next) => {
-  Admin.find()
+  Expert.find()
     .then((result) => {
       res.status(200).json({
-        admin: result,
+        expert: result,
       });
     })
     .catch((error) => {
@@ -126,10 +137,10 @@ router.get("/expert", (req, res, next) => {
 
 //get expert data by ID
 router.get("/expert/:id", (req, res, next) => {
-  Admin.findById(req.params.id)
+  Expert.findById(req.params.id)
     .then((result) => {
       res.status(200).json({
-        admin: result,
+        expert: result,
       });
     })
     .catch((error) => {
@@ -144,7 +155,7 @@ router.get("/expert/:id", (req, res, next) => {
 router.patch('/expert/update/:id', async (req,res)=>{
   try{
       const _id = req.params.id;
-     const updateExpert=await Admin.findByIdAndUpdate(_id, req.body,{
+     const updateExpert=await Expert.findByIdAndUpdate(_id, req.body,{
          new:true
      })
      res.send(updateExpert);
@@ -155,7 +166,7 @@ router.patch('/expert/update/:id', async (req,res)=>{
 
 //delete expert Records
 router.delete("/expert/delete/:id", (req, res, next) => {
-  Admin.findByIdAndDelete({ _id: req.params.id })
+  Expert.findByIdAndDelete({ _id: req.params.id })
     .then((result) => {
       res.status(200).json({
         message: "Item Deleted",
@@ -173,22 +184,22 @@ router.delete("/expert/delete/:id", (req, res, next) => {
 //expert forgot password
 router.post('/expert/forgotpwd/:id', (req, res) => {
   
-  const token=Math.floor(100000 + Math.random() * 900000);
-    Admin.findOne({ email: req.body.email }).then((admin) => {
-      if (!admin) {
+  const OTP=Math.floor(100000 + Math.random() * 900000);
+  Expert.findOne({ email: req.body.email }).then((user) => {
+      if (!user) {
         return res.status(422).json({
           error: "user doesn't exist",
         });
       }
-      admin.resetToken = token;
-      admin.expireToken = Date.now() + 3600000;
-      admin.save().then((result) => {
+      user.OTP = OTP;
+      user.expireOTP = Date.now() + 3600000;
+      user.save().then((result) => {
         transporter.sendMail({
-          to: admin.email,
-          from: "jackweatherald@gmail.com",
+          to: user.Email,
+          from: "tonyura6@gmail.com",
           subject: "Password reset",
           html: `<p>Your request for reset password </p>
-            <h5>Use this OTP   <a href="http://localhost:3000/reset/">${token}</a> to reset password</h5>`,
+            <h5>Use this OTP   <a href="http://localhost:3000/reset/">${OTP}</a> to reset password</h5>`,
         });
         res.json({
           message: "Reset email sent successfully. Please check your email.",
@@ -200,7 +211,7 @@ router.post('/expert/forgotpwd/:id', (req, res) => {
 
 //expert reset passsword
 router.patch('/expert/resetpwd/:id', (req, res) => {
-  const { resetToken, newPass ,email} = req.body;
+  const { OTP, newPass ,email} = req.body;
   bcrypt.hash(newPass,10,(err,hash)=>{
     if(err){
       return res.status(500).json({
@@ -208,11 +219,11 @@ router.patch('/expert/resetpwd/:id', (req, res) => {
       });
     }
   else{
-      if (resetToken) 
+      if (OTP) 
     {
-      Admin.findOne({ resetToken }, (err, admin) => 
+      Expert.findOne({ OTP }, (err, user) => 
       {
-        if (err || !admin) {
+        if (err || !user) {
           return res.status(422).json({
             error: "user with same token doesn't exist",
           });
@@ -221,9 +232,8 @@ router.patch('/expert/resetpwd/:id', (req, res) => {
         const obj = {
           password: hash,
         };
-          console.log(obj);
-        admin = _.extend(admin, obj);
-        admin.save((err, result) => 
+        user = _.extend(user, obj);
+        user.save((err, result) => 
         {
           if (err) {
             return res.status(422).json({ error: "reset password error" });
@@ -247,6 +257,69 @@ router.patch('/expert/resetpwd/:id', (req, res) => {
 })
 });
 
+//change expert Password
+router.post('/expert/changepwd/:id',(req,res)=>
+{
+let newPass=req.body.newPassword;
+let oldPass=req.body.current_password;
+let confirmPass=req.body.confirm_Password;
+
+if(!newPass || !oldPass){
+  return res.status(404).send({message:'Missing body arguments'});
+}
+Expert.findById(req.params.id,(err, admin)=>
+  {
+    console.log(admin);
+    if (err || !admin) {
+      return res.status(422)
+      .json({
+        error: "user doesn't exist",
+      });
+    }
+    else
+    {
+      bcrypt.compare(oldPass,admin.password).then((isMatch)=>{
+        if(!isMatch){
+          return res.status(400)
+          .json({
+            error:"incorrect current password"
+          })
+        }
+      
+        if(newPass==confirmPass){
+          
+          bcrypt.hash(newPass,10,(err1,hash)=>
+          {
+        
+            if(err1) throw err1;
+            admin.password=hash;
+            admin.
+            save()
+            .then((response)=>{
+              return res.status(200).json({msg:'password change Successfully'});
+            })
+            .catch((err2)=>{
+              res.status(500).json({
+                error:[{admin_save_error:err2}],
+              });
+            });
+          });
+        }
+        else{
+          return res.status(400).json({
+            message:"confirm_pass doen't match with new_pass"
+          })
+        }
+      })
+      .catch((err)=>{
+        res.status(501).json({
+          err:"error"
+        })
+      })
+    }
+  })
+})
+
 
 //student signup
 router.post('/student/signup',(req,res,next)=>{
@@ -260,22 +333,22 @@ router.post('/student/signup',(req,res,next)=>{
   else{
   const student = new Student({
       _id: new mongoose.Types.ObjectId(),
-      firstname:req.body.firstname,
-      lastname:req.body.lastname,
+      FirstName:req.body.FirstName,
+      LastName:req.body.LastName,
       username:req.body.username,
       email:req.body.email,
       password:hash,
       phone:req.body.phone,
-      address:req.body.address,
-      qualification:req.body.qualification,
-      interestarea:req.body.interestarea,
-      technology:req.body.technology
+      Address:req.body.Address,
+      Qualification:req.body.Qualification,
+      Interestarea:req.body.Interestarea,
+      Technology:req.body.Technology
   })
  student.save()
  .then((admin) => {
   transporter.sendMail({
     to: admin.email,
-    from: "jackweatherald@gmail.com",
+    from: "tonyura6@gmail.com",
     subject: "SignUp Notification",
     html: "<h1>  You have successfully registered here as a student </h1>",
   });
@@ -284,9 +357,12 @@ router.post('/student/signup',(req,res,next)=>{
   });
 })
 .catch((err) => {
-  console.log(err);
+  // console.log(err);
   res.status(500).json({
-    error: err,
+    Error:"UserName Already exsts",
+    Errors:"or Please Enter Unique Email",
+    Message:"Student validation Failed!",
+    msg:err,
   });
 });
 }
@@ -315,9 +391,9 @@ router.post('/student/login',(req,res,next)=>{
             {
              const token = jwt.sign({
                  username:user[0].username,
-                 email:user[0].email,
+                 Email:user[0].Email,
                  phone:user[0].phone,
-                 interestarea:user[0].interestarea
+                 Interestarea:user[0].Interestarea
              },
              'this is my code',
              {
@@ -325,16 +401,17 @@ router.post('/student/login',(req,res,next)=>{
              }
              );
              res.status(200).json({
-                firstname:user[0].firstname,
-                lastname:user[0].lastname,
+                id:user[0].id,
+                FirstName:user[0].FirstName,
+                LastName:user[0].LastName,
                  username:user[0].username,
                  email:user[0].email,
                  phone:user[0].phone,
-                 address:user[0].address,
-                 qualification:user[0].qualification,
-                 interestarea:user[0].interestarea,
-                 technology:user[0].technology,
-                 usertype:user[0].usertype,
+                 Address:user[0].Address,
+                 Qualification:user[0].Qualification,
+                 Interestarea:user[0].Interestarea,
+                 Technology:user[0].Technology,
+                 UserType:user[0].UserType,
                  token:token
              })
             }
@@ -410,22 +487,22 @@ router.delete('/student/delete/:id',async(req,res)=>{
 //student forget-Password
 router.post('/student/forgotpwd/:id', (req, res) => {
   
-  const token=Math.floor(100000 + Math.random() * 900000);
+  const OTP=Math.floor(100000 + Math.random() * 900000);//generate 6 digit Random Number
     Student.findOne({ email: req.body.email }).then((student) => {
       if (!student) {
         return res.status(422).json({
           error: "user doesn't exist",
         });
       }
-      student.resetToken = token;
-      student.expireToken = Date.now() + 3600000;
+      student.OTP = OTP;
+      student.expireOTP = Date.now() + 3600000;//Valid for 1 hrs
       student.save().then((result) => {
         transporter.sendMail({
           to: student.email,
-          from: "jackweatherald@gmail.com",
+          from: "tonyura6@gmail.com",
           subject: "Password reset",
           html: `<p>Your request for reset password </p>
-            <h5>Use this OTP   <a href="http://localhost:3000/reset/">${token}</a> to reset password</h5>`,
+            <h5>Use this OTP   <a href="http://localhost:3000/reset/">${OTP}</a> to reset password</h5>`,
         });
         res.json({
           message: "Reset email sent successfully. Please check your email.",
@@ -436,7 +513,8 @@ router.post('/student/forgotpwd/:id', (req, res) => {
 
 //student Reset password
 router.patch('/student/resetpwd/:id', (req, res) => {
-  const { resetToken, newPass ,email} = req.body;
+  const { OTP, newPass ,email} = req.body;
+  //convert the string password into hash code
   bcrypt.hash(newPass,10,(err,hash)=>{
     if(err){
       return res.status(500).json({
@@ -444,9 +522,9 @@ router.patch('/student/resetpwd/:id', (req, res) => {
       });
     }
   else{
-      if (resetToken) 
+      if (OTP) 
     {
-      Student.findOne({ resetToken }, (err, student) => 
+      Student.findOne({ OTP }, (err, student) => 
       {
         if (err || !student) {
           return res.status(422).json({
@@ -480,5 +558,70 @@ router.patch('/student/resetpwd/:id', (req, res) => {
 })
 });
 
+
+
+router.post('/student/changepwd/:id',(req,res)=>
+{
+let newPass=req.body.newPassword;
+let oldPass=req.body.current_password;
+let confirmPass=req.body.confirm_Password;
+if(!newPass || !oldPass){
+  return res.status(404).send({message:'Missing body arguments'});
+}
+//Student findById 
+Student.findById(req.params.id,(err, student)=>
+  {
+    console.log(student);
+    if (err || !student) {
+      return res.status(422)
+      .json({
+        error: "user doesn't exist",
+      });
+    }
+    else
+    {
+      //Check the old password and new password are same 
+      bcrypt.compare(oldPass,student.password).then((isMatch)=>{
+        if(!isMatch){
+          return res.status(400)
+          .json({
+            error:"incorrect current password"
+          })
+        }
+        if(newPass==confirmPass)//Check new password and confirm password are same 
+        {
+          //convert new password into hash code
+          bcrypt.hash(newPass,10,(err1,hash)=>
+          {
+            if (err1) throw err1;
+            student.password=hash;
+            student.
+            save()
+            .then((response)=>{
+              return res.status(200).json({msg:'password change Successfully'});
+            })
+            .catch((err2)=>{
+              res.status(500).json({
+                error:[{student_save_error:err2}],
+              });
+            });
+          });
+        }
+        //new password and confirm password doen't match then 
+        else
+        {
+          return res.status(400).json({
+            message:"confirm_pass doen't match with new_pass"
+          })
+        }
+      })
+      .catch((err)=>{
+        res.status(501).json({
+          err:"error"
+        })
+      })
+    }
+  })
+})
     module.exports = router;
 

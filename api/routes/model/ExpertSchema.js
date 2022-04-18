@@ -1,23 +1,20 @@
 const mongoose = require("mongoose");
 const validator = require("validator");
 
-const studentSchema = new mongoose.Schema({
-    FirstName: {
+const ExpertSchema = new mongoose.Schema({
+  _id: mongoose.Schema.Types.ObjectId,
+   Name: {
         type:String,
         required:true,
-     
+        minlength:3
     },
-    LastName:{
-      type:String,
-      required:true,
-
-    },
-    username: {
+    UserName: {
         type:String,
         required:true,
-        unique:true
+        minlength:3,
+        unique:[true,"UserName Already Exists"]
     },
-    email: {
+    Email: {
         type:String,
         required:true,
         unique: [true, "Email is already present"],
@@ -35,7 +32,6 @@ const studentSchema = new mongoose.Schema({
         type:Number,
         min:10,
         required:true,
-        unique:true
     },
     Address : {
         type:String,
@@ -45,27 +41,21 @@ const studentSchema = new mongoose.Schema({
         type:String,
         required: true
     },
-    Interestarea: {
-        type:String,
-        required: true
-    },
     Technology: {
         type:String,
         required: true
     },
-    UserType: {
-        type:Number,
-        default: 0
-    },
-    OTP:{
-        type:String
-    },
-    expireOTP:{
-        type:Date
-    }
+  UserType: {
+    type:Number,
+    default: 1
+},
 
-})
-
-const Student = new mongoose.model('Student', studentSchema);
-
-module.exports = Student;
+  OTP: {
+    type:String
+  },
+  expireOTP:{
+    type:Date,
+  } 
+});
+const Expert = new mongoose.model('Expert', ExpertSchema);
+module.exports =Expert;
