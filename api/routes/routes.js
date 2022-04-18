@@ -48,7 +48,7 @@ router.post('/expert/signup',(req,res,next)=>{
  .then((user) => {
   transporter.sendMail({
     to: user.Email,
-    from: "tonyura6@gmail.com",
+    from: "aasim.info002@gmail.com",
     subject: "SignUp Notification",
     html: "<h1>  You have successfully registered here as a student </h1>",
   });
@@ -196,7 +196,7 @@ router.post('/expert/forgotpwd/:id', (req, res) => {
       user.save().then((result) => {
         transporter.sendMail({
           to: user.Email,
-          from: "tonyura6@gmail.com",
+          from: "aasim.info002@gmail.com",
           subject: "Password reset",
           html: `<p>Your request for reset password </p>
             <h5>Use this OTP   <a href="http://localhost:3000/reset/">${OTP}</a> to reset password</h5>`,
@@ -348,7 +348,7 @@ router.post('/student/signup',(req,res,next)=>{
  .then((admin) => {
   transporter.sendMail({
     to: admin.email,
-    from: "tonyura6@gmail.com",
+    from: "aasim.info002@gmail.com",
     subject: "SignUp Notification",
     html: "<h1>  You have successfully registered here as a student </h1>",
   });
@@ -499,7 +499,7 @@ router.post('/student/forgotpwd/:id', (req, res) => {
       student.save().then((result) => {
         transporter.sendMail({
           to: student.email,
-          from: "tonyura6@gmail.com",
+          from: "aasim.info002@gmail.com",
           subject: "Password reset",
           html: `<p>Your request for reset password </p>
             <h5>Use this OTP   <a href="http://localhost:3000/reset/">${OTP}</a> to reset password</h5>`,
