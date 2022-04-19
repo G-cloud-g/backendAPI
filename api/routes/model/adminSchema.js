@@ -27,6 +27,10 @@ const AdminSchema = new mongoose.Schema({
       password: {
           type: String,
           required: true
+        },
+        UserType:{
+            type:String,
+            required:true
         }
     });
     const Admin = new mongoose.model('Admin', AdminSchema);

@@ -191,20 +191,22 @@ router.post('/expert/forgotpwd', (req, res) => {
         });
       }
       user.OTP = OTP;
-      user.expireOTP = Date.now() + 3600000;
+      // user.expireOTP = Date.now() + 3600000;
       user.save().then((result) => {
         transporter.sendMail({
           to: user.Email,
           from: "yunus.mohd@oxcytech.com",
           subject: "Password reset",
           html: `<p>Your request for reset password </p>
-            <h4><center>Your OTP  is: <strong>${OTP}</strong> to reset password</center></h4>`,
+          <center><h3>Your OTP is:</h3> <h1>${OTP}</h1></center>`,
         });
         res.json({
-          message: "Reset email sent successfully. Please check your email.",
-        });
-      });
-    });
+          message: "OTP successfully sent on your mail Id. Please check.",
+        })
+      })
+    }).catch((err)=>{
+      Message:err
+    })
   });
 
 
@@ -224,10 +226,9 @@ router.patch('/expert/resetpwd', (req, res) => {
       {
         if (err || !user) {
           return res.status(422).json({
-            error: "user with same token doesn't exist",
+            error: "OTP is Wrong, Please Enter currect OTP",
           });
         }
-
         const obj = {
           password: hash,
         };
@@ -236,8 +237,15 @@ router.patch('/expert/resetpwd', (req, res) => {
         {
           if (err) {
             return res.status(422).json({ error: "reset password error" });
-          } else 
+          } 
+          else 
           {
+            transporter.sendMail({
+            to: user.Email,
+            from: "yunus.mohd@oxcytech.com",
+            subject: "Account Password Change",
+            html: `your password has been changed successfully`,
+          });
             res.status(200).json
             ({
               message: "your password has been changed successfully",
@@ -246,7 +254,6 @@ router.patch('/expert/resetpwd', (req, res) => {
         });
       })
     }
-   
   else {
     return res.status(421).json({
       error: "Authentication Error",
@@ -287,15 +294,18 @@ Expert.findOne({email},(err, admin)=>
         }
       
         if(newPass==confirmPass){
-          
           bcrypt.hash(newPass,10,(err1,hash)=>
           {
-        
             if(err1) throw err1;
             admin.password=hash;
-            admin.
-            save()
+            admin.save()
             .then((response)=>{
+              transporter.sendMail({
+              to: admin.Email,
+              from: "yunus.mohd@oxcytech.com",
+              subject: "Account Password Change",
+              html: `your password has been changed successfully`,
+            });
               return res.status(200).json({msg:'password change Successfully'});
             })
             .catch((err2)=>{
@@ -497,7 +507,7 @@ router.post('/student/forgotpwd', (req, res) => {
         });
       }
       student.OTP = OTP;
-      student.expireOTP = Date.now() + 3600000;//Valid for 1 hrs
+      // student.expireOTP = Date.now() + 3600000;//Valid for 1 hrs
       student.save().then((result) => {
         transporter.sendMail({
           to: student.email,
@@ -507,9 +517,11 @@ router.post('/student/forgotpwd', (req, res) => {
           <center><h3>Your OTP is:</h3> <h1>${OTP}</h1></center>`,
         });
         res.json({
-          message: "Reset password mail sent successfully. Please check your email.",
-        });
-      });
+          message: "OTP successfully sent on your mail Id. Please check.",
+        })
+        })
+      }).catch((err)=>{
+        Message:err
     });
   });
 
@@ -530,7 +542,7 @@ router.patch('/student/resetpwd', (req, res) => {
       {
         if (err || !student) {
           return res.status(422).json({
-            error: "user with same token doesn't exist",
+            error: "OTP is Wrong, Please Enter currect OTP",
           });
         }
         const obj = {
@@ -543,6 +555,12 @@ router.patch('/student/resetpwd', (req, res) => {
             return res.status(422).json({ error: "reset password error" });
           } else 
           {
+            transporter.sendMail({
+            to: student.email,
+            from: "yunus.mohd@oxcytech.com",
+            subject: "Account Password Change",
+            html: `your password has been changed successfully`,
+          });
             res.status(200).json
             ({
               message: "your password has been changed successfully",
@@ -601,7 +619,15 @@ Student.findOne({email},(err, student)=>
             student.
             save()
             .then((response)=>{
-              return res.status(200).json({msg:'password change Successfully'});
+              transporter.sendMail({
+              to: student.email,
+              from: "yunus.mohd@oxcytech.com",
+              subject: "Account Password Change",
+              html: `your password has been changed successfully`,
+              });
+              return res.status(200).json({
+                msg:'password change Successfully'
+              });
             })
             .catch((err2)=>{
               res.status(500).json({
@@ -626,5 +652,92 @@ Student.findOne({email},(err, student)=>
     }
   })
 })
+
+//Admin Route
+// router.post('/Admin/signup',(req,res,next)=>{
+//   bcrypt.hash(req.body.password,10,(err, hash)=>{
+//       if(err)
+//       {
+//           return res.status(500).json({
+//               error:err
+//           })
+//       }
+//   else{
+//   const admin = new Admin({
+//       _id: new mongoose.Types.ObjectId(),
+//       CompanyName:req.body.CompanyName,
+//       UserName:req.body.UserName,
+//       Email:req.body.Email,
+//       password:hash,
+//       UserType:req.body.UserType
+//   })
+//  admin.save()
+//  .then((admin1) => {
+//   transporter.sendMail({
+//     to: admin1.Email,
+//     from: "yunus.mohd@oxcytech.com",
+//     subject: "SignUp Notification",
+//     html: "<h1>Welcome</h1>",
+//   });
+//   res.status(200).json({
+//     message: "Email sent successfully",
+//   });
+// })
+// .catch((err) => {
+//   res.status(500).json({
+//     msg:err,
+//   });
+// });
+// }
+// });
+// });
+
+router.post('/Admin/login',(req,res,next)=>{
+ Admin.find({UserName:req.body.UserName})
+  .then(admin=>{
+      if(admin.length < 1)
+      {
+          return res.status(401).json({
+              msg:'Admin Not Exist'
+          })
+      }
+      bcrypt.compare(req.body.password,admin[0].password,(err,result)=>{
+          if(!result)
+          {
+              return res.status(401).json({
+                  msg:'Incorrect Password'
+              })
+          }
+          if(result)
+          {
+           const token = jwt.sign({
+               CompanyName:admin[0].CompanyName,
+               UserName:admin[0].UserName,
+               Email:admin[0].Email,
+               UserType:admin[0].UserType
+           },
+           'this is my code',
+           {
+               expiresIn:"24h"
+           }
+           );
+           res.status(200).json({
+            CompanyName:admin[0].CompanyName,
+            UserName:admin[0].UserName,
+            Email:admin[0].Email,
+            UserType:admin[0].UserType,
+            token:token
+           })
+          }
+      })
+  })
+  .catch(err=>{
+      res.status(500).json
+      ({
+          err:error
+      })
+  })
+})
+
     module.exports = router;
 
