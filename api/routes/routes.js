@@ -18,7 +18,6 @@ const transporter = nodemailer.createTransport(
     service: "gmail",
     auth: {
     api_key: process.env.API_KEY
-
     },
   })
 );
@@ -48,9 +47,9 @@ router.post('/expert/signup',(req,res,next)=>{
  .then((user) => {
   transporter.sendMail({
     to: user.Email,
-    from: "aasim.info002@gmail.com",
+    from:"yunus.mohd@oxcytech.com",
     subject: "SignUp Notification",
-    html: "<h1>  You have successfully registered here as a student </h1>",
+    html: "<h1>  You have successfully registered here as a Expert </h1>",
   });
   res.status(200).json({
     message: "Email sent successfully",
@@ -120,11 +119,11 @@ router.post('/expert/login', (req, res, next) => {
 });
 
 //get expert data
-router.get("/expert", (req, res, next) => {
+router.get("/experts", (req, res, next) => {
   Expert.find()
     .then((result) => {
       res.status(200).json({
-        expert: result,
+        experts: result,
       });
     })
     .catch((error) => {
@@ -136,8 +135,8 @@ router.get("/expert", (req, res, next) => {
 });
 
 //get expert data by ID
-router.get("/expert/:id", (req, res, next) => {
-  Expert.findById(req.params.id)
+router.get("/expert", (req, res, next) => {
+  Expert.findOne({email:req.body.email})
     .then((result) => {
       res.status(200).json({
         expert: result,
@@ -182,7 +181,7 @@ router.delete("/expert/delete/:id", (req, res, next) => {
 });
 
 //expert forgot password
-router.post('/expert/forgotpwd/:id', (req, res) => {
+router.post('/expert/forgotpwd', (req, res) => {
   
   const OTP=Math.floor(100000 + Math.random() * 900000);
   Expert.findOne({ email: req.body.email }).then((user) => {
@@ -196,10 +195,10 @@ router.post('/expert/forgotpwd/:id', (req, res) => {
       user.save().then((result) => {
         transporter.sendMail({
           to: user.Email,
-          from: "aasim.info002@gmail.com",
+          from: "yunus.mohd@oxcytech.com",
           subject: "Password reset",
           html: `<p>Your request for reset password </p>
-            <h5>Use this OTP   <a href="http://localhost:3000/reset/">${OTP}</a> to reset password</h5>`,
+            <h4><center>Your OTP  is: <strong>${OTP}</strong> to reset password</center></h4>`,
         });
         res.json({
           message: "Reset email sent successfully. Please check your email.",
@@ -210,7 +209,7 @@ router.post('/expert/forgotpwd/:id', (req, res) => {
 
 
 //expert reset passsword
-router.patch('/expert/resetpwd/:id', (req, res) => {
+router.patch('/expert/resetpwd', (req, res) => {
   const { OTP, newPass ,email} = req.body;
   bcrypt.hash(newPass,10,(err,hash)=>{
     if(err){
@@ -258,8 +257,9 @@ router.patch('/expert/resetpwd/:id', (req, res) => {
 });
 
 //change expert Password
-router.post('/expert/changepwd/:id',(req,res)=>
+router.post('/expert/changepwd',(req,res)=>
 {
+  let email=req.body.email;
 let newPass=req.body.newPassword;
 let oldPass=req.body.current_password;
 let confirmPass=req.body.confirm_Password;
@@ -267,7 +267,7 @@ let confirmPass=req.body.confirm_Password;
 if(!newPass || !oldPass){
   return res.status(404).send({message:'Missing body arguments'});
 }
-Expert.findById(req.params.id,(err, admin)=>
+Expert.findOne({email},(err, admin)=>
   {
     console.log(admin);
     if (err || !admin) {
@@ -348,7 +348,7 @@ router.post('/student/signup',(req,res,next)=>{
  .then((admin) => {
   transporter.sendMail({
     to: admin.email,
-    from: "aasim.info002@gmail.com",
+    from: "yunus.mohd@oxcytech.com",
     subject: "SignUp Notification",
     html: "<h1>  You have successfully registered here as a student </h1>",
   });
@@ -426,11 +426,11 @@ router.post('/student/login',(req,res,next)=>{
   })
 
 //get students data
-  router.get('/student', (req, res, next) => {
+  router.get('/students', (req, res, next) => {
   Student.find()
     .then((result) => {
       res.status(201).json({
-        student: result,
+        students: result,
       });
     })
     .catch((error) => {
@@ -443,8 +443,9 @@ router.post('/student/login',(req,res,next)=>{
 
 
   //get student data by ID
-    router.get('/student/:id', (req, res, next) => {
-      Student.findById(req.params.id)
+    router.get('/student', (req, res, next) => {
+      // let email=req.body.email;
+      Student.findOne({email:req.body.email})
         .then((result) => {
           res.status(200).json({
             student: result,
@@ -474,8 +475,9 @@ router.patch('/student/update/:id', async (req,res)=>{
 //delete student records
 router.delete('/student/delete/:id',async(req,res)=>{
     try{
+    
         const deleteStudents=
-        await Student.findByIdAndDelete(req.params.id);
+        await Student.findAndDelete(req.params.id);
         if(!req.params.id){
             return res.status(400).send();
         }
@@ -485,7 +487,7 @@ router.delete('/student/delete/:id',async(req,res)=>{
 })
 
 //student forget-Password
-router.post('/student/forgotpwd/:id', (req, res) => {
+router.post('/student/forgotpwd', (req, res) => {
   
   const OTP=Math.floor(100000 + Math.random() * 900000);//generate 6 digit Random Number
     Student.findOne({ email: req.body.email }).then((student) => {
@@ -499,20 +501,20 @@ router.post('/student/forgotpwd/:id', (req, res) => {
       student.save().then((result) => {
         transporter.sendMail({
           to: student.email,
-          from: "aasim.info002@gmail.com",
+          from: "yunus.mohd@oxcytech.com",
           subject: "Password reset",
           html: `<p>Your request for reset password </p>
-            <h5>Use this OTP   <a href="http://localhost:3000/reset/">${OTP}</a> to reset password</h5>`,
+          <center><h3>Your OTP is:</h3> <h1>${OTP}</h1></center>`,
         });
         res.json({
-          message: "Reset email sent successfully. Please check your email.",
+          message: "Reset password mail sent successfully. Please check your email.",
         });
       });
     });
   });
 
 //student Reset password
-router.patch('/student/resetpwd/:id', (req, res) => {
+router.patch('/student/resetpwd', (req, res) => {
   const { OTP, newPass ,email} = req.body;
   //convert the string password into hash code
   bcrypt.hash(newPass,10,(err,hash)=>{
@@ -560,8 +562,9 @@ router.patch('/student/resetpwd/:id', (req, res) => {
 
 
 
-router.post('/student/changepwd/:id',(req,res)=>
+router.post('/student/changepwd',(req,res)=>
 {
+  let email=req.body.email;
 let newPass=req.body.newPassword;
 let oldPass=req.body.current_password;
 let confirmPass=req.body.confirm_Password;
@@ -569,7 +572,7 @@ if(!newPass || !oldPass){
   return res.status(404).send({message:'Missing body arguments'});
 }
 //Student findById 
-Student.findById(req.params.id,(err, student)=>
+Student.findOne({email},(err, student)=>
   {
     console.log(student);
     if (err || !student) {

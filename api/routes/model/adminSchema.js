@@ -3,7 +3,7 @@ const validator = require("validator");
 
 const AdminSchema = new mongoose.Schema({
     _id: mongoose.Schema.Types.ObjectId,
-     Name: {
+     CompanyName: {
           type:String,
           required:true,
           minlength:3
@@ -27,7 +27,7 @@ const AdminSchema = new mongoose.Schema({
       password: {
           type: String,
           required: true
-      }
+        }
     });
     const Admin = new mongoose.model('Admin', AdminSchema);
     module.exports =Admin;
