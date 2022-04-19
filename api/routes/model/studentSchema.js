@@ -60,9 +60,9 @@ const studentSchema = new mongoose.Schema({
     OTP:{
         type:String
     },
-    expireOTP:{
-        type:Date
-    }
+    // expireOTP:{
+    //     type:Date
+    // }
 
 })
 
