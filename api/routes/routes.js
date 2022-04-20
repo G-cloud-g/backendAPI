@@ -9,7 +9,8 @@ const sendgridTransport = require("nodemailer-sendgrid-transport");
 const crypto = require("crypto");
 const _ = require("lodash");
 const Student = require("./model/studentSchema");
- const Admin=require('./model/AdminSchema');
+const Admin=require('./model/AdminSchema');
+const Employee=require('./model/EmployeeSchema');
 require("dotenv").config();
 
 
@@ -52,7 +53,8 @@ router.post('/expert/signup',(req,res,next)=>{
     html: "<h1>  You have successfully registered here as a Expert </h1>",
   });
   res.status(200).json({
-    message: "Email sent successfully",
+    message: "Expert Added successfully",
+    msg:"Please Check Your Mail"
   });
 })
 .catch((err) => {
@@ -738,6 +740,104 @@ router.post('/Admin/login',(req,res,next)=>{
       })
   })
 })
+
+//Employee Route
+router.post('/Employee/signup',(req,res,next)=>{
+  bcrypt.hash(req.body.password,10,(err, hash)=>{
+      if(err)
+      {
+          return res.status(500).json({error:err})
+      }
+  else
+  { const UserName=req.body.admin_username;
+    Admin.findOne({UserName})
+    .then(admin=>{
+      if(admin.length < 1)
+      {
+          return res.status(401).json({
+              msg:'Admin Not Exist'
+          })
+      }
+      else
+      {
+      const employee = new Employee({
+      FirstName:req.body.FirstName,
+      LastName:req.body.LastName,
+      UserName:req.body.UserName,
+      Email:req.body.Email,
+      password:hash,
+      UserType:req.body.UserType
+  })
+ employee.save()
+ .then((emp) => {
+  res.status(200).json({
+    message: "Employee Account Successfully Created",
+  });
+})
+.catch((err) => {
+  res.status(500).json({
+    _msg:"UserName Already Exist",
+    msg:err,
+  });
+});
+}//first catch
+}).catch((error)=>{
+  res.status(501).json({
+    msgs:"Admin Doen't Exists",
+})
+})
+}
+});
+})
+
+router.post('/Employee/login',(req,res,next)=>{
+  Employee.find({UserName:req.body.UserName})
+   .then(admin=>{
+       if(admin.length < 1)
+       {
+           return res.status(401).json({
+               msg:'Employee Not Exist'
+           })
+       }
+       bcrypt.compare(req.body.password,admin[0].password,(err,result)=>{
+           if(!result)
+           {
+               return res.status(401).json({
+                   msg:'Incorrect Password'
+               })
+           }
+           if(result)
+           {
+            const token = jwt.sign({
+                FirstName:admin[0].FirstName,
+                LastName:admin[0].LastName,
+                UserName:admin[0].UserName,
+                Email:admin[0].Email,
+                UserType:admin[0].UserType
+            },
+            'this is my code',
+            {
+                expiresIn:"24h"
+            }
+            );
+            res.status(200).json({
+              FirstName:admin[0].FirstName,
+              LastName:admin[0].LastName,
+             UserName:admin[0].UserName,
+             Email:admin[0].Email,
+             UserType:admin[0].UserType,
+             token:token
+            })
+           }
+       })
+   })
+   .catch(err=>{
+       res.status(500).json
+       ({
+           err:error
+       })
+   })
+ })
 
     module.exports = router;
 
