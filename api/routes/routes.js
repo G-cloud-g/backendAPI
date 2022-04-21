@@ -748,16 +748,6 @@ router.post('/Employee/signup',(req,res,next)=>{
       {
           return res.status(500).json({error:err})
       }
-  else
-  { const UserName=req.body.admin_username;
-    Admin.findOne({UserName})
-    .then(admin=>{
-      if(admin.length < 1)
-      {
-          return res.status(401).json({
-              msg:'Admin Not Exist'
-          })
-      }
       else
       {
       const employee = new Employee({
@@ -780,13 +770,8 @@ router.post('/Employee/signup',(req,res,next)=>{
     msg:err,
   });
 });
-}//first catch
-}).catch((error)=>{
-  res.status(501).json({
-    msgs:"Admin Doen't Exists",
-})
-})
-}
+}//else
+
 });
 })
 
