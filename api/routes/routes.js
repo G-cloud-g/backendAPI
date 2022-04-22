@@ -13,7 +13,6 @@ const Admin=require('./model/AdminSchema');
 const Employee=require('./model/EmployeeSchema');
 require("dotenv").config();
 
-
 const transporter = nodemailer.createTransport(
   sendgridTransport({
     service: "gmail",
@@ -193,7 +192,6 @@ router.post('/expert/forgotpwd', (req, res) => {
         });
       }
       user.OTP = OTP;
-      // user.expireOTP = Date.now() + 3600000;
       user.save().then((result) => {
         transporter.sendMail({
           to: user.Email,
@@ -272,7 +270,6 @@ router.post('/expert/changepwd',(req,res)=>
 let newPass=req.body.newPassword;
 let oldPass=req.body.current_password;
 let confirmPass=req.body.confirm_Password;
-
 if(!newPass || !oldPass){
   return res.status(404).send({message:'Missing body arguments'});
 }
@@ -369,7 +366,6 @@ router.post('/student/signup',(req,res,next)=>{
   });
 })
 .catch((err) => {
-  // console.log(err);
   res.status(500).json({
     Error:"UserName Already exsts",
     Errors:"or Please Enter Unique Email",
@@ -453,10 +449,8 @@ router.post('/student/login',(req,res,next)=>{
     });
   });
 
-
-  //get student data by ID
+  //get student data 
     router.get('/student', (req, res, next) => {
-      // let email=req.body.email;
       Student.findOne({email:req.body.email})
         .then((result) => {
           res.status(200).json({
@@ -509,7 +503,6 @@ router.post('/student/forgotpwd', (req, res) => {
         });
       }
       student.OTP = OTP;
-      // student.expireOTP = Date.now() + 3600000;//Valid for 1 hrs
       student.save().then((result) => {
         transporter.sendMail({
           to: student.email,
@@ -581,7 +574,6 @@ router.patch('/student/resetpwd', (req, res) => {
 });
 
 
-
 router.post('/student/changepwd',(req,res)=>
 {
   let email=req.body.email;
@@ -611,9 +603,8 @@ Student.findOne({email},(err, student)=>
             error:"incorrect current password"
           })
         }
-        if(newPass==confirmPass)//Check new password and confirm password are same 
+        if(newPass==confirmPass)
         {
-          //convert new password into hash code
           bcrypt.hash(newPass,10,(err1,hash)=>
           {
             if (err1) throw err1;
@@ -638,7 +629,6 @@ Student.findOne({email},(err, student)=>
             });
           });
         }
-        //new password and confirm password doen't match then 
         else
         {
           return res.status(400).json({
@@ -655,46 +645,7 @@ Student.findOne({email},(err, student)=>
   })
 })
 
-//Admin Route
-// router.post('/Admin/signup',(req,res,next)=>{
-//   bcrypt.hash(req.body.password,10,(err, hash)=>{
-//       if(err)
-//       {
-//           return res.status(500).json({
-//               error:err
-//           })
-//       }
-//   else{
-//   const admin = new Admin({
-//       _id: new mongoose.Types.ObjectId(),
-//       CompanyName:req.body.CompanyName,
-//       UserName:req.body.UserName,
-//       Email:req.body.Email,
-//       password:hash,
-//       UserType:req.body.UserType
-//   })
-//  admin.save()
-//  .then((admin1) => {
-//   transporter.sendMail({
-//     to: admin1.Email,
-//     from: "yunus.mohd@oxcytech.com",
-//     subject: "SignUp Notification",
-//     html: "<h1>Welcome</h1>",
-//   });
-//   res.status(200).json({
-//     message: "Email sent successfully",
-//   });
-// })
-// .catch((err) => {
-//   res.status(500).json({
-//     msg:err,
-//   });
-// });
-// }
-// });
-// });
-
-router.post('/Admin/login',(req,res,next)=>{
+router.post('/admin/login',(req,res,next)=>{
  Admin.find({UserName:req.body.UserName})
   .then(admin=>{
       if(admin.length < 1)
@@ -742,7 +693,7 @@ router.post('/Admin/login',(req,res,next)=>{
 })
 
 //Employee Route
-router.post('/Employee/signup',(req,res,next)=>{
+router.post('/employee/signup',(req,res,next)=>{
   bcrypt.hash(req.body.password,10,(err, hash)=>{
       if(err)
       {
@@ -770,12 +721,11 @@ router.post('/Employee/signup',(req,res,next)=>{
     msg:err,
   });
 });
-}//else
-
+}
 });
 })
 
-router.post('/Employee/login',(req,res,next)=>{
+router.post('/employee/login',(req,res,next)=>{
   Employee.find({UserName:req.body.UserName})
    .then(admin=>{
        if(admin.length < 1)
@@ -823,6 +773,4 @@ router.post('/Employee/login',(req,res,next)=>{
        })
    })
  })
-
     module.exports = router;
-
