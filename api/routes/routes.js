@@ -586,7 +586,6 @@ if(!newPass || !oldPass){
 //Student findById 
 Student.findOne({email},(err, student)=>
   {
-    console.log(student);
     if (err || !student) {
       return res.status(422)
       .json({
@@ -595,7 +594,6 @@ Student.findOne({email},(err, student)=>
     }
     else
     {
-      //Check the old password and new password are same 
       bcrypt.compare(oldPass,student.password).then((isMatch)=>{
         if(!isMatch){
           return res.status(400)
@@ -773,4 +771,152 @@ router.post('/employee/login',(req,res,next)=>{
        })
    })
  })
+ router.post('/employee/forgotpwd', (req, res) => {
+  
+  const OTP=Math.floor(100000 + Math.random() * 900000);
+    Employee.findOne({ Email: req.body.email }).then((employee) => {
+      if (!employee) {
+        return res.status(422).json({
+          error: "user doesn't exist",
+        });
+      }
+      employee.OTP = OTP;
+      employee.save().then((result) => {
+        transporter.sendMail({
+          to: employee.Email,
+          from: "yunus.mohd@oxcytech.com",
+          subject: "Password reset",
+          html: `<p>Your request for reset password </p>
+          <center><h3>Your OTP is:</h3> <h1>${OTP}</h1></center>`,
+        });
+        res.json({
+          message: "OTP successfully sent on your mail Id. Please check.",
+        })
+        })
+      }).catch((err)=>{
+        Message:err
+    });
+  });
+
+
+router.patch('/employee/resetpwd', (req, res) => {
+  const { OTP, newPass ,email} = req.body;
+  bcrypt.hash(newPass,10,(err,hash)=>{
+    if(err){
+      return res.status(500).json({
+        error:err
+      });
+    }
+  else{
+      if (OTP) 
+    {
+      Employee.findOne({ OTP }, (err, employee) => 
+      {
+        if (err || !employee) {
+          return res.status(422).json({
+            error: "OTP is Wrong, Please Enter currect OTP",
+          });
+        }
+        const obj = {
+          password: hash,
+        };
+          employee = _.extend(employee, obj);
+          employee.save((err, result) => 
+        {
+          if (err) {
+            return res.status(422).json({ error: "reset password error" });
+          } else 
+          {
+            transporter.sendMail({
+            to: employee.Email,
+            from: "yunus.mohd@oxcytech.com",
+            subject: "Account Password Change",
+            html: `your password has been changed successfully`,
+          });
+            res.status(200).json
+            ({
+              message: "your password has been changed successfully",
+            });
+          }
+        });
+      })
+    }
+  else {
+    return res.status(421).json({
+      error: "Authentication Error",
+    });
+  }
+}
+})
+});
+
+router.post('/employee/changepwd',(req,res)=>
+{
+let Email=req.body.email;
+let newPass=req.body.newPassword;
+let oldPass=req.body.current_password;
+let confirmPass=req.body.confirm_Password;
+if(!newPass || !oldPass){
+  return res.status(404).send({message:'Missing body arguments'});
+}
+
+Employee.findOne({Email},(err, employee)=>
+  {
+    if (err || !employee) {
+      return res.status(422)
+      .json({
+        error: "user doesn't exist",
+      });
+    }
+    else
+    {
+      bcrypt.compare(oldPass,employee.password).then((isMatch)=>{
+        if(!isMatch){
+          return res.status(400)
+          .json({
+            error:"incorrect current password"
+          })
+        }
+        if(newPass==confirmPass)
+        {
+          bcrypt.hash(newPass,10,(err1,hash)=>
+          {
+            if (err1) throw err1;
+            employee.password=hash;
+            employee.
+            save()
+            .then((response)=>{
+              transporter.sendMail({
+              to: employee.Email,
+              from: "yunus.mohd@oxcytech.com",
+              subject: "Account Password Change",
+              html: `your password has been changed successfully`,
+              });
+              return res.status(200).json({
+                msg:'password change Successfully'
+              });
+            })
+            .catch((err2)=>{
+              res.status(500).json({
+                error:[{student_save_error:err2}],
+              });
+            });
+          });
+        }
+        else
+        {
+          return res.status(400).json({
+            message:"confirm_pass doen't match with new_pass"
+          })
+        }
+      })
+      .catch((err)=>{
+        res.status(501).json({
+          err:"error"
+        })
+      })
+    }
+  })
+})
+
     module.exports = router;

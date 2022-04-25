@@ -37,6 +37,9 @@ const EmployeeSchema = new mongoose.Schema({
             type:Number,
             default: 2
         },
+        OTP: {
+            type:String
+          },
     });
     const Employee = new mongoose.model('Employee', EmployeeSchema);
     module.exports =Employee;
