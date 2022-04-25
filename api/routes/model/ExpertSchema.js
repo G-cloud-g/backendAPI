@@ -48,14 +48,11 @@ const ExpertSchema = new mongoose.Schema({
   UserType: {
     type:Number,
     default: 1
-},
+ },
 
   OTP: {
     type:String
   },
-//   expireOTP:{
-//     type:Date,
-//   } 
 });
 const Expert = new mongoose.model('Expert', ExpertSchema);
 module.exports =Expert;
