@@ -22,7 +22,6 @@ const transporter = nodemailer.createTransport(
   })
 );
 
-
 router.post('/expert/signup',(req,res,next)=>{
   bcrypt.hash(req.body.password,10,(err, hash)=>{
       if(err)
@@ -57,7 +56,6 @@ router.post('/expert/signup',(req,res,next)=>{
   });
 })
 .catch((err) => {
-  // console.log(err);
   res.status(500).json
   ({
     Error:"UserName Already exsts",
@@ -68,6 +66,7 @@ router.post('/expert/signup',(req,res,next)=>{
 }
 });
 });
+
 //expert login 
 router.post('/expert/login', (req, res, next) => {
   Expert.find({ UserName: req.body.UserName })
@@ -128,7 +127,6 @@ router.get("/experts", (req, res, next) => {
       });
     })
     .catch((error) => {
-      console.log(error);
       res.status(500).json({
         error: error,
       });
@@ -144,7 +142,6 @@ router.get("/expert", (req, res, next) => {
       });
     })
     .catch((error) => {
-      console.log(error);
       res.status(500).json({
         error: error,
       });
@@ -174,7 +171,6 @@ router.delete("/expert/delete/:id", (req, res, next) => {
       });
     })
     .catch((error) => {
-      console.log(error);
       res.status(500).json({
         error: error,
       });
@@ -182,8 +178,8 @@ router.delete("/expert/delete/:id", (req, res, next) => {
 });
 
 //expert forgot password
-router.post('/expert/forgotpwd', (req, res) => {
-  
+router.post('/expert/forgotpwd', (req, res) => 
+{  
   const OTP=Math.floor(100000 + Math.random() * 900000);
   Expert.findOne({ email: req.body.email }).then((user) => {
       if (!user) {
@@ -266,7 +262,7 @@ router.patch('/expert/resetpwd', (req, res) => {
 //change expert Password
 router.post('/expert/changepwd',(req,res)=>
 {
-  let email=req.body.email;
+let email=req.body.email;
 let newPass=req.body.newPassword;
 let oldPass=req.body.current_password;
 let confirmPass=req.body.confirm_Password;
@@ -275,7 +271,6 @@ if(!newPass || !oldPass){
 }
 Expert.findOne({email},(err, admin)=>
   {
-    console.log(admin);
     if (err || !admin) {
       return res.status(422)
       .json({
@@ -329,7 +324,6 @@ Expert.findOne({email},(err, admin)=>
   })
 })
 
-
 //student signup
 router.post('/student/signup',(req,res,next)=>{
   bcrypt.hash(req.body.password,10,(err, hash)=>{
@@ -381,7 +375,6 @@ router.post('/student/signup',(req,res,next)=>{
 router.post('/student/login',(req,res,next)=>{
     Student.find({username:req.body.username})
     .then(user=>{
-        console.log(user);
         if(user.length < 1)
         {
             return res.status(401).json({
@@ -442,7 +435,6 @@ router.post('/student/login',(req,res,next)=>{
       });
     })
     .catch((error) => {
-      console.log(error);
       res.status(500).json({
         error: error,
       });
@@ -458,7 +450,6 @@ router.post('/student/login',(req,res,next)=>{
           });
         })
         .catch((error) => {
-          console.log(error);
           res.status(500).json({
             error: error,
           });
@@ -573,10 +564,9 @@ router.patch('/student/resetpwd', (req, res) => {
 })
 });
 
-
 router.post('/student/changepwd',(req,res)=>
 {
-  let email=req.body.email;
+let email=req.body.email;
 let newPass=req.body.newPassword;
 let oldPass=req.body.current_password;
 let confirmPass=req.body.confirm_Password;
@@ -662,10 +652,10 @@ router.post('/admin/login',(req,res,next)=>{
           if(result)
           {
            const token = jwt.sign({
-               CompanyName:admin[0].CompanyName,
-               UserName:admin[0].UserName,
-               Email:admin[0].Email,
-               UserType:admin[0].UserType
+              CompanyName:admin[0].CompanyName,
+              UserName:admin[0].UserName,
+              Email:admin[0].Email,
+              UserType:admin[0].UserType
            },
            'this is my code',
            {
@@ -687,6 +677,71 @@ router.post('/admin/login',(req,res,next)=>{
       ({
           err:error
       })
+  })
+})
+
+router.post('/admin/changepwd',(req,res)=>{
+  let Email=req.body.email;
+  let newPass=req.body.newPassword;
+  let oldPass=req.body.current_password;
+  let confirmPass=req.body.confirm_Password;
+  if(!newPass || !oldPass){
+    return res.status(404)
+    .send({message:'Missing body arguments'});
+  }
+  Admin.findOne({Email},(err,admin)=>{
+    if(err || !admin){
+      return res.status(422)
+      .json({
+        error:"user doesn't exist"
+      });
+    }
+    else {
+      bcrypt.compare(oldPass,admin.password)
+      .then((isMatch)=>{
+        if(!isMatch){
+          return res.status(400)
+          .json({
+            error:"incorrect current password"
+          })
+        }
+        if(newPass==confirmPass)
+        {
+          bcrypt.hash(newPass,10,(err1,hash)=>{
+            if(err) throw err1;
+            admin.password=hash;
+            admin.save()
+            .then((response)=>{
+              transporter.sendMail({
+                to:admin.Email,
+                from:"yunus.mohd@oxcytech.com",
+                subject:"Account Password Change",
+                html:`your password has been changed successfully`,
+              });
+              return res.status(200).json({
+                msg:'Password Change Successfully'
+              })
+            })
+            .catch((err2)=>{
+              res.status(500).json({
+                error:[{admin_save_error:err2}],
+              });
+            });
+          });
+        }
+        else 
+        {
+          return res.status(400).json({
+            message:"confirm_pass doen't match with new_pass" 
+          })
+        }
+      })
+      .catch((err)=>{
+        res.status(501).json({
+          err:"error"
+        })
+      })
+    }
   })
 })
 
@@ -797,7 +852,6 @@ router.post('/employee/login',(req,res,next)=>{
         Message:err
     });
   });
-
 
 router.patch('/employee/resetpwd', (req, res) => {
   const { OTP, newPass ,email} = req.body;
