@@ -40,7 +40,7 @@ router.post('/expert/signup',(req,res,next)=>{
       phone:req.body.phone,
       Address:req.body.Address,
       Qualification:req.body.Qualification,
-      Technology:req.body.Technologyjhgo
+      Technology:req.body.Technology
   })
  expert.save()
  .then((user) => {
