@@ -680,6 +680,37 @@ router.post('/admin/login',(req,res,next)=>{
   })
 })
 
+//Forgot Password Admin
+router.post('/admin/forgotpwd',(req,res)=>{
+  const OTP =Math.floor(100000 + Math.random()*900000);
+  console.log();
+  Admin.findOne({Email:req.body.email}).
+  then((admin)=>{
+    if(!admin)
+    {
+      return res.status(422).json({
+        error:"user doesn't exist",
+      });
+    }
+    admin.OTP=OTP;
+    admin.save().
+    then((result)=>{
+      transporter.sendMail({
+      to:admin.Email,
+      from:"yunus.mohd@oxcytech.com",
+      subject:"Password reset",
+      html:`<p>Your request for reset password </p>
+      <center><h3>Your OTP is:</h3><h1>${OTP}</h1></center>`,
+      })
+      res.json({
+      message:"OTP successfully send on your mail Id. Please check."
+    })
+    })
+  }).catch((err)=>{
+    Message:err
+  })
+})
+
 router.post('/admin/changepwd',(req,res)=>{
   let Email=req.body.email;
   let newPass=req.body.newPassword;
@@ -972,5 +1003,4 @@ Employee.findOne({Email},(err, employee)=>
     }
   })
 })
-
     module.exports = router;
