@@ -31,7 +31,10 @@ const AdminSchema = new mongoose.Schema({
         UserType:{
             type:String,
             required:true
-        }
+        },
+        OTP: {
+            type:String
+          },
     });
     const Admin = new mongoose.model('Admin', AdminSchema);
     module.exports =Admin;
