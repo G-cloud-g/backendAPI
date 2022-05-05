@@ -711,6 +711,58 @@ router.post('/admin/forgotpwd',(req,res)=>{
   })
 })
 
+router.patch('/admin/resetpwd',(req,res)=>{
+  const {OTP, newPass,email}=req.body;
+  bcrypt.hash(newPass,10,(err,hash)=>{
+    if(err)
+    {
+      return res.status(500).json({
+        error:err
+      });
+    }
+    else{
+      if(OTP)
+      {
+        Admin.findOne({OTP},(err,admin)=>{
+          if(err || !admin)
+          {
+            return res.status(422).json({
+              error:"OTP is Wrong, Please Enter correct OTP",
+            })
+          }
+          const obj={
+            password:hash,
+          };
+          admin=_.extend(admin,obj);
+          admin.save((err,result)=>{
+            if(err)
+            {
+              return res.status(422).json({error:"Reset Password error"});
+            }
+            else 
+            {
+              transporter.sendMail({
+                to:admin.Email,
+                from:"yunus.mohd@oxcytech.com",
+                subject:"Account Password changed",
+                html:`your password has been changed successfully`,
+              });
+              res.status(200).json({
+                message: "your password has been changed successfully",
+              });
+            }
+          });
+        })
+      }
+      else{
+        return res.status(421).json({
+          error:"Authentication Error",
+        })
+      }
+    }
+  })
+})
+
 router.post('/admin/changepwd',(req,res)=>{
   let Email=req.body.email;
   let newPass=req.body.newPassword;
